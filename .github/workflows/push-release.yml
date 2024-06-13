@@ -1,0 +1,30 @@
+name: Release to environments
+# This workflow is triggered when a PR is merged to main with update to 'releases/*.txt' file.  
+
+on:
+  push:
+    paths:
+      - releases/dev.txt
+      - releases/stg.txt
+      - releases/int.txt
+      - releases/prod.txt
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+      
+      - name: Calc version
+        working-directory: releases
+        continue-on-error: true
+        run: |
+          ENVNAME=$(git diff --name-only HEAD^ HEAD | grep 'releases' | cut -d'/' -f2 | cut -d'.' -f1)
+          if [ -z "$ENVNAME" ]; then
+            echo "No release file found"
+            exit 0
+          fi
+          VERSION=$(cat ${ENVNAME}.txt | grep 'version' | cut -d'=' -f2 | tr -d ' "')
+          echo "VERSION=$VERSION on ENV=$ENVNAME"
