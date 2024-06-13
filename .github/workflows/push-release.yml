@@ -21,10 +21,10 @@ jobs:
         working-directory: releases
         continue-on-error: true
         run: |
-          ENVNAME=$(git diff --name-only HEAD^ HEAD | grep 'releases' | cut -d'/' -f2 | cut -d'.' -f1)
+          ENVNAME=$(git log --name-only -n1 --oneline | grep 'releases' | cut -d'/' -f2 | cut -d'.' -f1)
           if [ -z "$ENVNAME" ]; then
             echo "No release file found"
             exit 0
           fi
-          VERSION=$(cat ${ENVNAME}.txt | grep 'version' | cut -d'=' -f2 | tr -d ' "')
+          VERSION=$(cat $ENVNAME.txt | grep 'version' | cut -d'=' -f2 | tr -d ' ')
           echo "VERSION=$VERSION on ENV=$ENVNAME"
