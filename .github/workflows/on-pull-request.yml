@@ -6,4 +6,4 @@ on:
 
 jobs:
   on_pull_request:
-    uses: ./.github/workflows/_reusable.yml@main
+    uses: ./.github/workflows/_reusable.yml
