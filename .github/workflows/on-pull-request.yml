@@ -1,0 +1,17 @@
+name: On Pull Request event
+
+
+on:
+  pull_request:
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+      
+      - name: show version
+        run: |
+          cat releases/dev.txt
