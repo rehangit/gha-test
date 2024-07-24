@@ -11,10 +11,14 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
       
-      - name: show version
+      - name: show dev version
         run: |
           echo "DEV=$(cat releases/dev.txt)"
 
+      - name: show stg version
+        run: |
+          echo "DEV=$(cat releases/stg.txt)"
+
       - name: show current hash
         run: |
-          echo "HASH=${GITHUB_SHA:0:10}"
+          echo "HASH=${GITHUB_SHA:0:12}"
