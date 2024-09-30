@@ -26,6 +26,13 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
 
+      - name: Github context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo Release Tag=${{ github.event.release.tag_name }}
+        shell: bash
+
       - name: Check tag
         if: inputs.env != 'dev'
         run: |
