@@ -1,24 +1,9 @@
 name: Release to stg environment
 # This workflow is triggered when a Github Release is published with tag: v*-stg
 
-on:
-  push:
-    branches-ignore:
-      - "**"
-    tags:
-      - v[0-9]+.[0-9]+.[0-9]+-stg
+on: create
 
 jobs:
-  Check-main-branch:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check main branch
-        run: |
-          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
-            echo "This action can only be run on the main branch"
-            exit 1
-          fi
-        shell: bash
   Deploy-stg:
     uses: ./.github/workflows/_deploy.yml
     with:

@@ -26,13 +26,22 @@ jobs:
       - name: Code checkout
         uses: actions/checkout@v4
 
-      - name: Calc & Validate versions
+      - name: Check tag
+        if: inputs.env != 'dev'
         run: |
-          pkg_version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
-          release_version=$(echo ${GITHUB_REF_NAME/v/} | sed -e "s/\-$env//g") # read release version without v and -env
-          echo "VERSION_TAG=$release_version" >> $GITHUB_ENV
-          echo VERSION_TAG=$release_version
-          [ "$env" = "dev" ] || [ "$pkg_version" = "$release_version" ] || { echo "Package version ($pkg_version) must match release version ($release_version)"; exit 1; }
+          version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
+          suffix=$([ "$env" = "prod" ] && "" || "-$env")
+          expected=v$version$env
+          [ "${{github.event.release.tag_name}}" = "$expected" ] || { echo "Tag name must be: $expected"; exit 1; }
+        shell: bash
+
+      - name: Check main branch
+        if: inputs.env != 'dev'
+        run: |
+          if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+            echo "This tag is not from the main branch. Exiting."
+            exit 1
+          fi
         shell: bash
 
       - name: Terraform apply
