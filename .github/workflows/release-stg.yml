@@ -1,0 +1,16 @@
+name: Release to stg environment
+# This workflow is triggered when a Github Release is published with tag: v*-stg
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+-stg
+
+jobs:
+  Deploy-stg:
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      env: stg
+    secrets: inherit

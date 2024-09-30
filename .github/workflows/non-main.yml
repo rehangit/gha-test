@@ -1,0 +1,39 @@
+name: Push to non-main branch
+
+on:
+  push:
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "**"
+
+jobs:
+  Build:
+    uses: ./.github/workflows/_build.yml
+    secrets: inherit
+
+  Plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - dev
+          - stg
+          - int
+          - prod
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Terraform plan
+        env:
+          env: ${{ matrix.env }}
+        run: |
+          echo terraform init -input=false -backend-config="key=terraform/deployments/${env}/terraform.tfstate"
+          echo terraform plan -input=false -var="env=${env}"
+        shell: bash

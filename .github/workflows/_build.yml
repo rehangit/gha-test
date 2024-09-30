@@ -1,0 +1,28 @@
+name: ♺ build lambdas
+
+env:
+  NODE_VERSION: 20
+
+on:
+  workflow_call:
+    inputs:
+      upload-env:
+        type: string
+        description: Env of s3 where to upload the artifact. One of [dev, stg, int, prod]
+        required: false
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.upload-env }}
+    timeout-minutes: 5
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          npm install
+          npm run build
+          npm run test

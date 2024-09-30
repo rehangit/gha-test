@@ -1,0 +1,19 @@
+name: Push to main branch
+
+on:
+  push:
+    branches:
+      - main
+    tags-ignore:
+      - "**"
+
+jobs:
+  Deploy-dev:
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      env: dev
+    secrets: inherit
+
+  # Wiz-scan:
+  #   uses: McK-Internal/mid-workflows/.github/workflows/wiz.yml@v1
+  #   secrets: inherit

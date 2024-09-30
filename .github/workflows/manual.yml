@@ -1,0 +1,11 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      env: dev
+    secrets: inherit

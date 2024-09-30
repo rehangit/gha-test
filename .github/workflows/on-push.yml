@@ -1,9 +1,0 @@
-name: On Push
-
-
-on:
-  push:
-
-jobs:
-  on_push:
-    uses: ./.github/workflows/_reusable.yml

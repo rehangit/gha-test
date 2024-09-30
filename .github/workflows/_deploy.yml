@@ -1,0 +1,41 @@
+name: ♺ deploy to env
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        type: string
+        description: Environment to deploy to. One of [dev, stg, int, prod]
+        required: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build.yml
+    with:
+      upload-env: ${{ inputs.env }}
+    secrets: inherit
+
+  tf:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: ${{ inputs.env }}
+    env:
+      env: ${{ inputs.env }}
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+
+      - name: Calc & Validate versions
+        run: |
+          pkg_version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
+          release_version=$(echo ${${GITHUB_REF_NAME/v/}/-$env}) # read release version without v and -env
+          [ "$pkg_version" = "$release_version" ] || { echo "Package version ($pkg_version) must match release version ($release_version)"; exit 1; }
+          echo "VERSION_TAG=$release_version" >> $GITHUB_ENV
+          echo VERSION_TAG=$release_version
+
+      - name: Terraform apply
+        run: |
+          echo terraform init -input=false -backend-config="key=terraform/deployments/${env}/terraform.tfstate"
+          echo terraform apply -auto-approve -input=false -var="env=${env}"
+        shell: bash

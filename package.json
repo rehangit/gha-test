@@ -1,0 +1,14 @@
+{
+  "name": "gha-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo Running tests...",
+    "build": "echo Running build...",
+    "publish": "echo Running publish..."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,9 +1,0 @@
-name: On Pull Request event
-
-
-on:
-  pull_request:
-
-jobs:
-  on_pull_request:
-    uses: ./.github/workflows/_reusable.yml
