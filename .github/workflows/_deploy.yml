@@ -30,8 +30,8 @@ jobs:
         if: inputs.env != 'dev'
         run: |
           version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
-          suffix=$([ "$env" = "prod" ] && "" || "-$env")
-          expected=v$version$env
+          suffix=$([ "$env" = "prod" ] && (echo "") || (echo "-$env"))
+          expected=v$version$suffix
           [ "${{github.event.release.tag_name}}" = "$expected" ] || { echo "Tag name must be: $expected"; exit 1; }
         shell: bash
 
