@@ -2,12 +2,22 @@ name: Release to prod environment
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore:
+      - "**"
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
 
 jobs:
+  Check-main-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check main branch
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "This action can only be run on the main branch"
+            exit 1
+          fi
+        shell: bash
   Deploy-prod:
     uses: ./.github/workflows/_deploy.yml
     with:
