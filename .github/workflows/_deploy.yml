@@ -35,11 +35,14 @@ jobs:
 
       - name: Check tag
         if: inputs.env != 'dev'
+        env:
+          release_tag: ${{github.event.release.tag_name}}
         run: |
-          version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
-          suffix=$([ "$env" = "prod" ] && (echo "") || (echo "-$env"))
-          expected=v$version$suffix
-          [ "${{github.event.release.tag_name}}" = "$expected" ] || { echo "Tag name must be: $expected"; exit 1; }
+          pkg_version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
+          tag_version=$(echo $release_tag | sed -E 's/v([0-9]+\.[0-9]+\.[0-9]+).*/\1/') # extract version from tag
+          [ "$pkg_version" = "$tag_version" ] || { echo "Package version ($pkg_version) must match tag version: $tag_version"; exit 1; }
+          tag_env=$(echo $release_tag | sed -E 's/v[0-9]+\.[0-9]+\.[0-9]+-?(stg|int).*/\1/') # extract versienv suffix from tag
+          [ "$env" = "prod" ] && [ "$tag_env" = "" ] || [ "$tag_env" = "${env}" ] || { echo "Tag environment ($tag_env) must match workflow environment: $env"; exit 1; }
         shell: bash
 
       - name: Check main branch
