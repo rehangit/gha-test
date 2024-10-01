@@ -59,10 +59,9 @@ jobs:
       - name: Check main branch
         if: inputs.env != 'dev'
         run: |
-          if [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
-            echo "This tag is not from the main branch. Exiting."
-            exit 1
-          fi
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          echo branch=$branch
+          [ "$branch" = "main" ] || { echo "This tag is not from the main branch. Exiting."; exit 1; }
         shell: bash
 
       - name: Terraform apply
