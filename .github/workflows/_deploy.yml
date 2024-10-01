@@ -53,7 +53,11 @@ jobs:
           [ "$env" = "prod" ] && [ "$tag_env" = "$tag_name" ] || [ "$tag_env" = "${env}" ] || { echo "Tag environment ($tag_env) must match workflow environment: $env"; exit 1; }
 
           # Check if tag was created through the GitHub release interface
-          [ "$release_tag" = "$tag_name" ] || { echo "Tag $tag_name was not created through the GitHub release interface. Exiting."; exit 1; }
+          if [ "$release_tag" != "$tag_name" ]; then
+            echo "Tag $tag_name was not created through the GitHub release interface. Deleting tag and Exiting."
+            git push origin :$tag_name
+            exit 1; 
+          fi
         shell: bash
 
       - name: Check main branch
