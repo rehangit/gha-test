@@ -33,13 +33,25 @@ jobs:
           echo Release Tag=${{ github.event.release.tag_name }}
         shell: bash
 
-      - name: Check tag
+      - name: Check tag conditions
         if: inputs.env != 'dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
-          suffix=$([ "$env" = "prod" ] && (echo "") || (echo "-$env"))
-          expected=v$version$suffix
-          [ "${{github.event.release.tag_name}}" = "$expected" ] || { echo "Tag name must be: $expected"; exit 1; }
+          RELEASES=$(gh api repos/${{ github.repository }}/releases)
+          tag_name="${GITHUB_REF#refs/tags/}"
+          pkg_version=$(jq '.version' package.json | tr -d '"') # read package version without quotes
+          tag_version=$(echo $tag_name | sed -E 's/v([0-9]+\.[0-9]+\.[0-9]+).*/\1/') # extract version from tag
+          echo "tag_name=$tagname; tag_version=$tag_version; pkg_version=$pkg_version; RELEASES=$RELEASES"
+          [ "$pkg_version" = "$tag_version" ] || { echo "Package version ($pkg_version) must match tag version: $tag_version"; exit 1; }
+          tag_env=$(echo $tag_name | sed -E 's/v[0-9]+\.[0-9]+\.[0-9]+-?(stg|int).*/\1/') # extract versienv suffix from tag
+          [ "$env" = "prod" ] && [ "$tag_env" = "$tag_name" ] || [ "$tag_env" = "${env}" ] || { echo "Tag environment ($tag_env) must match workflow environment: $env"; exit 1; }
+          if echo "$RELEASES" | grep -q "\"tag_name\": \"$tag_name\""; then
+            echo "Tag $tag_name was created through the GitHub release interface."
+          else
+            echo "Tag $tag_name was not created through the GitHub release interface. Exiting."
+            exit 1
+          fi
         shell: bash
 
       - name: Check main branch
