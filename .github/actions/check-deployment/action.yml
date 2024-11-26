@@ -1,0 +1,28 @@
+name: Check deployment exists
+description: Checks if deployment exists on a particular env with current hash
+
+inputs:
+  github-token:
+    description: GitHub token
+    required: true
+  env:
+    description: Environment to check for deployment
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Check if current hash is deployed on ${{inputs.env}} environment
+      env:
+        target: ${{inputs.env}}
+      shell: bash
+      run: |
+        DEPLOYMENT_SHA=$(gh api repos/${{ github.repository }}/deployments \
+          -H "Authorization: token ${{ inputs.github-token }}" \
+          -f environment=$target -f sha=${{ github.sha }} \
+          --jq '.[0].sha')
+
+        if [ -z "$DEPLOYMENT_SHA" ]; then
+          echo "Current hash is not deployed on $target. First deploy to $target environment"
+          exit -1
+        fi

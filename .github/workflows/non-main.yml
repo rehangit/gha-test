@@ -9,11 +9,11 @@ on:
 
 jobs:
   Build:
-    uses: ./.github/workflows/_build.yml
+    uses: ./.github/workflows/build.yml
     secrets: inherit
 
   Plan:
-    runs-on: ubuntu-latest
+    runs-on: gh-larger-linux-mini
     timeout-minutes: 10
     permissions:
       id-token: write
@@ -24,16 +24,33 @@ jobs:
         env:
           - dev
           - stg
-          - int
           - prod
     steps:
       - name: Code checkout
         uses: actions/checkout@v4
 
       - name: Terraform plan
-        env:
-          env: ${{ matrix.env }}
-        run: |
-          echo terraform init -input=false -backend-config="key=terraform/deployments/${env}/terraform.tfstate"
-          echo terraform plan -input=false -var="env=${env}"
-        shell: bash
+        uses: ./.github/actions/terraform
+        with:
+          environment: ${{ matrix.env }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          apply: false
+          tfe-token: ${{ secrets.MID_TFE_TOKEN }}
+          tf-working-dir: terraform/deployments/${{ matrix.env }}
+
+  Version:
+    name: Bump version
+    if: github.event.head_commit.author.email
+    needs: [Plan, Build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: npmrc
+        uses: ./.github/actions/npmrc
+        with:
+          jfrog-mid-auth: ${{ secrets.JFROG_MID_AUTH }}
+
+      - name: Auto patch packages versions
+        uses: ./.github/actions/auto-version

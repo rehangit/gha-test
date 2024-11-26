@@ -1,0 +1,37 @@
+name: Release prod
+# This workflow is triggered when a new release is created with the tag pattern vx.x.x
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  Prod-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if deployment exists on stg
+        uses: ./.github/actions/check-deployment
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          env: stg
+
+      - name: Check if stage tag matching v*.*.*-* exists
+        shell: bash
+        run: |
+          TAGS=$(git tag --list "${{ github.ref_name }}-*")
+          if [ -z "$TAGS" ]; then
+            echo "Stage tag not found. First deploy to stg environment"
+            exit -1
+          fi
+
+  Release-prod:
+    needs: Prod-checks
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: prod
+    secrets: inherit

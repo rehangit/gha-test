@@ -9,11 +9,7 @@ on:
 
 jobs:
   Deploy-dev:
-    uses: ./.github/workflows/_deploy.yml
+    uses: ./.github/workflows/deploy.yml
     with:
       env: dev
     secrets: inherit
-
-  # Wiz-scan:
-  #   uses: McK-Internal/mid-workflows/.github/workflows/wiz.yml@v1
-  #   secrets: inherit

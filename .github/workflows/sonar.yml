@@ -1,0 +1,36 @@
+name: Sonar scan ➤
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  sonar:
+    runs-on: ${{ vars.SONAR_RUNS_ON }}
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: https://sonarqube.mckinsey.com
+      USER: ${{ secrets.ARTIFACTORY_USER }}
+      PASS: ${{ secrets.ARTIFACTORY_PASS }}
+      PROJECT_KEY: 16340-McK-Internal_mid-sso-hand
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Docker Login
+        run: docker login -u $USER -p $PASS mckinsey-docker.jfrog.io
+
+      - name: Sonar Scan
+        run: |
+          docker run -i --user `id -u` --rm -e SONAR_TOKEN -e SONAR_HOST_URL -v `pwd`:/app \
+            -w /app mckinsey-docker.jfrog.io/sonarsource/sonar-scanner-cli:${{ vars.SONAR_SCANNER_CLI_VERSION }} \
+            -Dsonar.projectKey=${{ env.PROJECT_KEY }} \
+            -Dsonar.sources=./ \
+            -Dsonar.branch.name=${{ github.ref_name }} \
+            -Dsonar.qualitygate.wait=false
+
+      - if: always()
+        name: Docker Logout
+        run: docker logout mckinsey-docker.jfrog.io

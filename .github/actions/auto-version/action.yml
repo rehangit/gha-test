@@ -1,0 +1,32 @@
+name: Auto Version
+description: Auto bump versions if not already bumped
+
+runs:
+  using: composite
+  steps:
+    - name: Get package versions
+      if: github.event.head_commit.author.email
+      run: |
+        git fetch origin main
+        MAIN_VERSION=$(jq -r '.version' <(git show origin/main:package.json))
+        CURRENT_VERSION=$(jq -r '.version' package.json)
+        echo "Main version: $MAIN_VERSION"
+        echo "Current version: $CURRENT_VERSION"
+        echo MAIN_VERSION=$MAIN_VERSION >> $GITHUB_ENV
+        echo CURRENT_VERSION=$CURRENT_VERSION >> $GITHUB_ENV
+      shell: bash
+
+    - name: Auto bump version if not already done
+      if: env.MAIN_VERSION == env.CURRENT_VERSION
+      env:
+        author_name: ${{ toJson(github.event.head_commit.author.name) }}
+        author_email: ${{ toJson(github.event.head_commit.author.email) }}
+      run: |
+        git config user.name '[CI] for ${{ env.author_name }}'
+        git config user.email '${{ env.author_email }}'
+        npm version -ws --include-workspace-root --no-git-tag-version patch
+        ver=$(jq -r '.version' package.json)
+        git add --all
+        git commit -m "[CI] Auto bumped package versions to '$ver'"
+        git push
+      shell: bash

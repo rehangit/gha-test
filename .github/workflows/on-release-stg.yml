@@ -1,0 +1,14 @@
+name: Release stg
+# This workflow is triggered when a new release is created with the tag pattern vx.x.x-stg
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+-*
+
+jobs:
+  Release-stg:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: stg
+    secrets: inherit

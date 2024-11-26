@@ -1,0 +1,74 @@
+name: Terraform Exec
+description: Terraform format, init, validate, plan and optionally apply
+
+inputs:
+  environment:
+    description: environemnt to plan/apply
+    required: true
+  tf-working-dir:
+    description: terraform working directory
+    required: false
+    default: terraform
+  tf-params:
+    description: Extra params for passing to tf plan
+    required: false
+    default: ''
+  apply:
+    description: whether to apply terraform
+    required: true
+  github-token:
+    description: secrets.GITHUB_TOKEN
+    required: true
+  tfe-token:
+    description: Terraform Enterprise personal access token to manage remote state. secrets.MID_GHA_TFE_TOKEN
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+        cli_config_credentials_hostname: terraform.mckinsey.cloud
+        cli_config_credentials_token: ${{ inputs.tfe-token }}
+
+    - name: AWS-Auth
+      uses: ./.github/actions/role
+      with:
+        environment: ${{ inputs.environment }}
+
+    - name: 'Terraform Format Check'
+      working-directory: ${{ inputs.tf-working-dir }}
+      continue-on-error: true
+      run: |
+        terraform version
+        terraform fmt -diff -recursive -check
+        # echo "TF_TOKEN_terraform_mckinsey_cloud=${{ inputs.tfe-token }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: 'Terraform Init'
+      working-directory: ${{ inputs.tf-working-dir }}
+      run: |
+        terraform init
+        terraform validate -no-color
+      shell: bash
+
+    - name: 'Terraform plan'
+      working-directory: ${{ inputs.tf-working-dir }}
+      env:
+        TF_VAR_commit_hash: ${{ github.sha }}
+        TF_VAR_semver: ${{ env.VERSION || github.ref_name }}
+        TF_VAR_client_id: ${{ env.DASHBOARD_CLIENT_ID }}
+        PLAN_VARS: ${{ inputs.tf-params }}
+        OUTPUT_FILE: ${{ inputs.apply == 'true' && format('-out=plan-{0}.tfout', inputs.environment) || '' }}
+      shell: bash
+      run: >
+        terraform plan -lock-timeout=300s
+        $OUTPUT_FILE
+        $PLAN_VARS
+
+    - name: 'Terraform apply'
+      if: ${{ inputs.apply == 'true' && (github.ref_name == 'main' || inputs.environment != 'prod')}}
+      working-directory: ${{ inputs.tf-working-dir }}
+      run: terraform apply -auto-approve plan-${{ inputs.environment }}.tfout
+      shell: bash

@@ -1,0 +1,35 @@
+name: E2E Tests ➤
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+        default: dev
+
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment"
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
+          - stg
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - working-directory: tests
+        env:
+          E2E_USER_LOGIN: ${{ vars.E2E_USER_LOGIN }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+        run: |
+          npm ci
+          npm run test:${{inputs.env}}

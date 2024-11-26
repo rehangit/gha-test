@@ -1,0 +1,23 @@
+name: AWS Account Role
+description: Assume AWS account role using oidc
+inputs:
+  environment:
+    description: Environment name
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: |
+        # get the line with aws_account_id
+        acc_line=$(grep "aws_account_id" terraform/deployments/${{ inputs.environment }}/backend.tf)
+        # extract the account id
+        acc_id=$(echo $acc_line | cut -d'=' -f2 | tr -d '" ')
+        echo "AWS_ACCOUNT_ID=$acc_id" >> $GITHUB_ENV
+      shell: bash
+
+    - name: AWS-Auth
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-region: us-east-1
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/mid-gha-role

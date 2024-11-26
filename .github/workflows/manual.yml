@@ -1,11 +1,22 @@
-name: Manual Deploy
+name: Deploy dev ➤
 
 on:
   workflow_dispatch:
+    inputs:
+      component:
+        description: "Component to deploy"
+        required: true
+        type: choice
+        default: "all"
+        options:
+          - all
+          - backend
+          - frontend
 
 jobs:
   Deploy:
-    uses: ./.github/workflows/_deploy.yml
+    uses: ./.github/workflows/deploy.yml
     with:
       env: dev
+      component: ${{ inputs.component }}
     secrets: inherit

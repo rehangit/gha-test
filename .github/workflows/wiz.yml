@@ -1,0 +1,9 @@
+name: Wiz Scan ➤
+
+on:
+  workflow_dispatch:
+
+jobs:
+  wiz-scan:
+    uses: McK-Internal/mid-workflows/.github/workflows/wiz.yml@v1
+    secrets: inherit
