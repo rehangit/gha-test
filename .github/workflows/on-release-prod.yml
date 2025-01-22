@@ -9,6 +9,8 @@ on:
 jobs:
   Prod-checks:
     runs-on: ubuntu-latest
+    permissions:
+      deployments: read
     steps:
       - uses: actions/checkout@v4
         with:
