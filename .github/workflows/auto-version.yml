@@ -1,0 +1,20 @@
+name: ♺ auto bump versions
+
+on:
+  pull_request_review:
+    types: submitted
+
+jobs:
+  Context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump github event state
+        run: |
+          echo "github.event: ${{ github.event }}"
+
+  Version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto patch packages versions
+        run: |
+          echo "Auto patching packages versions..."
