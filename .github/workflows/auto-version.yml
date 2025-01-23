@@ -9,8 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dump github event state
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github.event) }}
         run: |
-          echo "github.event: ${{ fromJson(github.event) }}"
+          echo "github.event: $GITHUB_CONTEXT"
 
   Version:
     runs-on: ubuntu-latest
