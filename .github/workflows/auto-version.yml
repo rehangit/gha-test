@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Dump github event state
         run: |
-          echo "github.event: ${{ toJson(github.event) }}"
+          echo "github.event: ${{ fromJson(github.event) }}"
 
   Version:
     runs-on: ubuntu-latest
