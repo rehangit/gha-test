@@ -2,7 +2,7 @@ name: ♺ auto bump versions
 
 on:
   pull_request_review:
-    types: submitted
+    types: [submitted, edited]
 
 jobs:
   Show-Context:
@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Dump github event state
         run: |
-          echo "github.event: ${{ github.event }}"
+          echo "github.event: ${{ toJson(github.event) }}"
 
   Version:
     runs-on: ubuntu-latest
