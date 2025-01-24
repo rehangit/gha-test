@@ -2,7 +2,7 @@ name: ♺ auto bump versions
 
 on:
   pull_request_review:
-    types: [submitted, edited]
+    types: submitted
 
 jobs:
   Show-Context:
@@ -17,6 +17,21 @@ jobs:
   Version:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Count approvals on current pull request
+        id: count-approvals
+        run: |
+          echo "Counting approvals..."
+          pr_number=${{ github.event.pull_request.number }}
+          reviews=$(gh api repos/${{ github.repository }}/pulls/$pr_number/reviews)
+          echo "Reviews: $reviews"
+          approvals=$(echo "$reviews" | jq '[.[] | unique_by(.user.login) | select(.state == "APPROVED")] | length')
+          echo "Number of approvals: $approvals"
+          echo "approvals=$approvals" >> $GITHUB_OUTPUT
+
       - name: Auto patch packages versions
+        if: steps.count-approvals.outputs.approvals >= 2
         run: |
           echo "Auto patching packages versions..."
