@@ -21,19 +21,29 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Count approvals on current pull request
-        id: count-approvals
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Counting approvals..."
-          pr_number=${{ github.event.pull_request.number }}
-          reviews=$(gh api repos/${{ github.repository }}/pulls/$pr_number/reviews)
+          reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
           echo "Reviews: $reviews"
-          approvals=$(echo "$reviews" | jq '[.[] | unique_by(.user.login) | select(.state == "APPROVED")] | length')
-          echo "Number of approvals: $approvals"
-          echo "approvals=$approvals" >> $GITHUB_OUTPUT
+          unique_approvals=$(echo "$reviews" | jq '[.[] | { state, login: .user.login}] | unique_by({login, state}) | [.[] | select(.state == "APPROVED")] | length')
+          echo "Number of unique approvals: $unique_approvals"
+          echo "approvals=$unique_approvals"
+          echo "approvals=$unique_approvals" >> $GITHUB_ENV
+
+          is_protected=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }} | jq '.protected')
+          echo "is_protected=$is_protected"
+          if [ "$is_protected" = "false" ]; then
+            echo "Branch not protected. Hence required_approvals=0"
+            echo "required_approvals=0" >> $GITHUB_ENV
+            exit 0
+          fi
+          required_approvals=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection | jq '.required_pull_request_reviews.required_approving_review_count')
+          echo "required_approvals=$required_approvals"
+          echo "required_approvals=$required_approvals" >> $GITHUB_ENV
 
       - name: Auto patch packages versions
-        if: steps.count-approvals.outputs.approvals >= 2
+        if: ${{ github.env.required_approvals == 0 || github.env.approvals >= github.env.required_approvals }}
         run: |
           echo "Auto patching packages versions..."
