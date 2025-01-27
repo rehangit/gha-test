@@ -8,23 +8,11 @@ on:
       - main
 
 jobs:
-  Show-Context:
+  CheckApprovals:
     runs-on: ubuntu-latest
     steps:
-      - name: Dump github event state
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github.event) }}
-        run: |
-          echo "github.event: $GITHUB_CONTEXT"
-
-  Version:
-    runs-on: ubuntu-latest
-    permissions: read-all
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Count approvals on current pull request
+      - name: Count approvals on current PR
+        id: count_approvals
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -32,17 +20,20 @@ jobs:
           reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
           approvals=$(echo "$reviews" | jq '[.[] | select(.state == "APPROVED")] | length')
           echo "Number of approvals: $approvals"
-          echo "approvals=$approvals" >> $GITHUB_ENV
+          echo "approvals=$approvals" >> $GITHUB_OUTPUT
+    outputs:
+      approvals: ${{ steps.count_approvals.outputs.approvals }}
 
-      - name: Check approvals
-        env:
-          approvals: ${{ env.approvals }}
-        run: |
-          echo "Checking approvals...": $approvals
-          if [ ${approvals} -lt 2 ]; then
-            echo "Approvals are less than 2. Exiting."
-            exit 0
-          fi
+  AutoVersion:
+    runs-on: ubuntu-latest
+    needs: CheckApprovals
+    if: ${{ fromJson(needs.CheckApprovals.outputs.approvals) >= 2 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: npmrc
+        uses: ./.github/actions/npmrc
 
       - name: Auto patch packages versions
         uses: ./.github/actions/auto-version
