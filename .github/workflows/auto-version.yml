@@ -16,6 +16,8 @@ jobs:
 
   Version:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,7 +32,9 @@ jobs:
           echo "Number of unique approvals: $approvals"
           echo "approvals=$approvals" >> $GITHUB_ENV
 
-          is_protected=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }} | jq '.protected')
+          base_branch_info=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }})
+          echo base_branch_info=$base_branch_info
+          is_protected= $(echo $base_branch_info | jq '.protected')
           if [ "$is_protected" = "false" ]; then
             required_approvals=0
             echo "Base branch not protected. Hence required_approvals=0"
