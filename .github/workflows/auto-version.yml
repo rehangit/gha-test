@@ -16,8 +16,7 @@ jobs:
 
   Version:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    permissions: read-all
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
