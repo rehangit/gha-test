@@ -26,21 +26,20 @@ jobs:
         run: |
           echo "Counting approvals..."
           reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
-          echo "Reviews: $reviews"
-          unique_approvals=$(echo "$reviews" | jq '[.[] | { state, login: .user.login}] | unique_by({login, state}) | [.[] | select(.state == "APPROVED")] | length')
-          echo "Number of unique approvals: $unique_approvals"
-          echo "approvals=$unique_approvals"
-          echo "approvals=$unique_approvals" >> $GITHUB_ENV
+          approvals=$(echo "$reviews" | jq '[.[] | { state, login: .user.login}] | unique_by({login, state}) | [.[] | select(.state == "APPROVED")] | length')
+          echo "Number of unique approvals: $approvals"
+          echo "approvals=$approvals" >> $GITHUB_ENV
 
           is_protected=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }} | jq '.protected')
-          echo "is_protected=$is_protected"
           if [ "$is_protected" = "false" ]; then
-            echo "Branch not protected. Hence required_approvals=0"
-            echo "required_approvals=0" >> $GITHUB_ENV
-            exit 0
+            required_approvals=0
+            echo "Base branch not protected. Hence required_approvals=0"
+          else
+            protection=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection)
+            required_approvals=$(echo "$protection" | jq '.required_pull_request_reviews.required_approving_review_count')
+            echo "Protected base branch. required_approvals=$required_approvals"
           fi
-          required_approvals=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection | jq '.required_pull_request_reviews.required_approving_review_count')
-          echo "required_approvals=$required_approvals"
+
           echo "required_approvals=$required_approvals" >> $GITHUB_ENV
 
       - name: Auto patch packages versions
