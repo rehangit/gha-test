@@ -3,6 +3,9 @@ name: ♺ auto bump versions
 on:
   pull_request_review:
     types: submitted
+  push:
+    branches-ignore:
+      - main
 
 jobs:
   Show-Context:
@@ -28,10 +31,18 @@ jobs:
           echo "Counting approvals..."
           reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
           approvals=$(echo "$reviews" | jq '[.[] | select(.state == "APPROVED")] | length')
-          echo "Number of unique approvals: $approvals"
+          echo "Number of approvals: $approvals"
           echo "approvals=$approvals" >> $GITHUB_ENV
 
-      - name: Auto patch packages versions
-        if: ${{ github.env.approvals >= 2 }}
+      - name: Check approvals
+        env:
+          approvals: ${{ env.approvals }}
         run: |
-          echo "Auto patching packages versions..."
+          echo "Checking approvals...": $approvals
+          if [ ${approvals} -lt 2 ]; then
+            echo "Approvals are less than 2. Exiting."
+            exit 0
+          fi
+
+      - name: Auto patch packages versions
+        uses: ./.github/actions/auto-version
