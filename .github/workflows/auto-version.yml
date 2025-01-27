@@ -27,25 +27,11 @@ jobs:
         run: |
           echo "Counting approvals..."
           reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
-          approvals=$(echo "$reviews" | jq '[.[] | { state, login: .user.login}] | unique_by({login, state}) | [.[] | select(.state == "APPROVED")] | length')
+          approvals=$(echo "$reviews" | jq '[.[] | select(.state == "APPROVED")] | length')
           echo "Number of unique approvals: $approvals"
           echo "approvals=$approvals" >> $GITHUB_ENV
 
-          base_branch_info=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }})
-          echo base_branch_info=$base_branch_info
-          is_protected= $(echo $base_branch_info | jq '.protected')
-          if [ "$is_protected" = "false" ]; then
-            required_approvals=0
-            echo "Base branch not protected. Hence required_approvals=0"
-          else
-            protection=$(gh api repos/${{ github.repository }}/branches/${{ github.event.pull_request.base.ref }}/protection)
-            required_approvals=$(echo "$protection" | jq '.required_pull_request_reviews.required_approving_review_count')
-            echo "Protected base branch. required_approvals=$required_approvals"
-          fi
-
-          echo "required_approvals=$required_approvals" >> $GITHUB_ENV
-
       - name: Auto patch packages versions
-        if: ${{ github.env.required_approvals == 0 || github.env.approvals >= github.env.required_approvals }}
+        if: ${{ github.env.approvals >= 2 }}
         run: |
           echo "Auto patching packages versions..."
