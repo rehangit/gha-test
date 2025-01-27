@@ -11,6 +11,11 @@ jobs:
   CheckApprovals:
     runs-on: ubuntu-latest
     steps:
+      - name: Dump event
+        env:
+          EVENT: ${{ toJson(github.event) }}
+        run: echo "$EVENT"
+
       - name: Count approvals on current PR
         id: count_approvals
         env:
@@ -31,6 +36,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: npmrc
         uses: ./.github/actions/npmrc
