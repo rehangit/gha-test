@@ -29,6 +29,8 @@ jobs:
   AutoVersion:
     runs-on: ubuntu-latest
     needs: CheckApprovals
+    permissions:
+      contents: write
     if: ${{ fromJson(needs.CheckApprovals.outputs.approvals) >= 2 }}
     steps:
       - name: Checkout code
@@ -40,6 +42,4 @@ jobs:
         uses: ./.github/actions/npmrc
 
       - name: Auto patch packages versions
-        env:
-          GH_TOKEN: ${{ github.token }}
         uses: ./.github/actions/auto-version
