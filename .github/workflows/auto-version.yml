@@ -1,20 +1,49 @@
 name: ♺ auto bump versions
+run-name: Auto version check PR#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title}} (${{ github.event.review.state }})
 
 on:
   pull_request_review:
     types: submitted
 
 jobs:
-  Context:
+  CheckApprovals:
     runs-on: ubuntu-latest
     steps:
-      - name: Dump github event state
-        run: |
-          echo "github.event: ${{ github.event }}"
+      - name: Dump event
+        env:
+          EVENT: ${{ toJson(github.event) }}
+        run: echo "$EVENT"
 
-  Version:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Auto patch packages versions
+      - name: Count approvals on current PR
+        id: count_approvals
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Auto patching packages versions..."
+          echo "Counting approvals..."
+          reviews=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews)
+          approvals=$(echo "$reviews" | jq '[.[] | select(.state == "APPROVED")] | length')
+          echo "Number of approvals: $approvals"
+          echo "approvals=$approvals" >> $GITHUB_OUTPUT
+    outputs:
+      approvals: ${{ steps.count_approvals.outputs.approvals }}
+
+  AutoVersion:
+    runs-on: ubuntu-latest
+    needs: CheckApprovals
+    permissions:
+      contents: write
+    if: ${{ fromJson(needs.CheckApprovals.outputs.approvals) >= 2 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: npmrc
+        uses: ./.github/actions/npmrc
+
+      - name: Auto patch packages versions
+        uses: ./.github/actions/auto-version
+        with:
+          author_name: ${{ github.event.pull_request.user.name }}
+          author_email: ${{ github.event.pull_request.user.email }}
