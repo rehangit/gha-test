@@ -1,4 +1,5 @@
 name: ♺ auto bump versions
+run-name: Auto version check \#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title}} (${{ github.event.review.state }})
 
 on:
   pull_request_review:
