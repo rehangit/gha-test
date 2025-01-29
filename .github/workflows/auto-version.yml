@@ -1,5 +1,5 @@
 name: ♺ auto bump versions
-run-name: Auto version check \#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title}} (${{ github.event.review.state }})
+run-name: Auto version check PR#${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title}} (${{ github.event.review.state }})
 
 on:
   pull_request_review:
@@ -44,3 +44,6 @@ jobs:
 
       - name: Auto patch packages versions
         uses: ./.github/actions/auto-version
+        with:
+          author_name: ${{ github.event.pull_request.user.name }}
+          author_email: ${{ github.event.pull_request.user.email }}

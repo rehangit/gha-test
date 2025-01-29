@@ -1,6 +1,14 @@
 name: Auto Version
 description: Auto bump versions if not already bumped
 
+inputs:
+  author_name:
+    description: 'Author name to use for the commit'
+    required: true
+  author_email:
+    description: 'Author email to use for the commit'
+    required: true
+
 runs:
   using: composite
   steps:
@@ -16,13 +24,10 @@ runs:
       shell: bash
 
     - name: Auto bump version if not already done
-      if: github.event.head_commit.author.email && env.CURRENT_VERSION && env.MAIN_VERSION == env.CURRENT_VERSION
-      env:
-        author_name: ${{ toJson(github.event.head_commit.author.name) }}
-        author_email: ${{ toJson(github.event.head_commit.author.email) }}
+      if: env.CURRENT_VERSION && env.MAIN_VERSION == env.CURRENT_VERSION
       run: |
-        git config user.name '[CI] for ${{ env.author_name }}'
-        git config user.email '${{ env.author_email }}'
+        git config user.name '[CI] for ${{ inputs.author_name }}'
+        git config user.email '${{ inputs.author_email }}'
         npm version -ws --include-workspace-root --no-git-tag-version patch
         ver=$(jq -r '.version' package.json)
         git add --all
